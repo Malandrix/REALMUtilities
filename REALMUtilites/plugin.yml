@@ -1,0 +1,21 @@
+name: REALMUtilities
+main: net.bunnehrealm.utilities.MainClass
+version: 1.0
+softdepend: [Vault, Votifier]
+description: >
+            Utilities for Minecraft Servers.
+commands:
+  setdisplayname:
+    description: Change a player's display name.
+  settabname:
+    description: Change a player's tab name.
+  nick:
+    description: Change a player's display name and tablist name.
+  smessage:
+    description: Send a exact message to a player.
+  votestart:
+    description: Start a vote.
+  vote:
+    description: Answer a vote.
+  links:
+    description: Show server links.
