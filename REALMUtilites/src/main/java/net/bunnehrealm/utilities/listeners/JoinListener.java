@@ -4,6 +4,7 @@ import net.bunnehrealm.utilities.MainClass;
 import net.bunnehrealm.utilities.tools.NameManager;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -11,6 +12,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerLoginEvent.Result;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scoreboard.Team;
 
 public class JoinListener implements Listener {
@@ -97,4 +101,13 @@ public class JoinListener implements Listener {
 		}
 	}
 	
+	
+	@EventHandler
+	public void onToolJoin(PlayerLoginEvent e){
+		Player p = e.getPlayer();
+		Inventory inv = p.getInventory();
+		ItemStack tool = new ItemStack(Material.WATCH);
+		ItemMeta im = tool.getItemMeta();
+		im.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&b&lREALM &dTool"));
+	}
 }
