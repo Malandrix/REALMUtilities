@@ -13,36 +13,32 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.bunnehrealm.utilities.listeners;
+package net.bunnehrealm.utilities.managers;
+
+import java.util.HashMap;
 
 import net.bunnehrealm.utilities.RealmUtilities;
 
-import org.bukkit.ChatColor;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 
-public class ExitCancelListener implements Listener {
+public class AFKManager {
 	RealmUtilities plugin = RealmUtilities.plugin;
-
-	public ExitCancelListener(RealmUtilities instance) {
+	
+	public AFKManager(RealmUtilities instance){
 		this.plugin = instance;
 	}
 
-	@EventHandler
-	public void onCancel(AsyncPlayerChatEvent e) {
-		Player p = e.getPlayer();
-		if (e.getMessage().equalsIgnoreCase("cancel")) {
-			if (plugin.players.getBoolean(p.getUniqueId().toString()
-					+ ".settingexit")) {
-				plugin.players.set(p.getUniqueId().toString()
-					+ ".settingexit", false);
-				plugin.savePlayers();
-				p.sendMessage(ChatColor.BLUE + "You have exited the exit setting mode.");
-				e.setCancelled(true);
+	public void afkCheck(){
+		HashMap<String, Location> hm = new HashMap<String, Location>();
+		for(Player p : Bukkit.getOnlinePlayers()){
+			if(hm.containsKey(p.getUniqueId())){
+				if(p.getLocation() == hm.get(p.getUniqueId())){
+					RealmUtilities.plugin.players.set(p.getUniqueId() + ".afk", true);
+				}
 			}
 		}
-
 	}
+	
 }

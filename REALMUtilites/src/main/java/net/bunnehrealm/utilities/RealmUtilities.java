@@ -1,3 +1,18 @@
+/*REALMUtilities is used for adding a great amount of features to your bukkit server.
+ Copyright (C) 2013  Rory Finnegan
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package net.bunnehrealm.utilities;
 
 import java.io.File;
@@ -17,9 +32,11 @@ import net.bunnehrealm.utilities.listeners.ExitCancelListener;
 import net.bunnehrealm.utilities.listeners.JoinListener;
 import net.bunnehrealm.utilities.listeners.LeaveListener;
 import net.bunnehrealm.utilities.listeners.SignPlaceListener;
+import net.bunnehrealm.utilities.listeners.ToolListener;
 import net.bunnehrealm.utilities.listeners.VoteListener;
-import net.bunnehrealm.utilities.tools.GUIManager;
-import net.bunnehrealm.utilities.tools.NameManager;
+import net.bunnehrealm.utilities.managers.GUIManager;
+import net.bunnehrealm.utilities.managers.NameManager;
+import net.bunnehrealm.utilities.managers.ToolManager;
 import net.milkbowl.vault.chat.Chat;
 
 import org.bukkit.Bukkit;
@@ -37,9 +54,9 @@ import org.bukkit.scoreboard.Team;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
-public class MainClass extends JavaPlugin {
+public class RealmUtilities extends JavaPlugin {
 	public NameManager NameManager = new NameManager(this);
-	public static MainClass plugin;
+	public static RealmUtilities plugin;
 
 	public File playersFile;
 	public FileConfiguration players;
@@ -47,6 +64,8 @@ public class MainClass extends JavaPlugin {
 	public FileConfiguration inventory;
 	public File locationsFile;
 	public FileConfiguration locations;
+	public File toolFile;
+	public FileConfiguration tool;
 
 	public static Chat chat = null;
 
@@ -62,17 +81,28 @@ public class MainClass extends JavaPlugin {
 	public SetFirstSpawnCommand sfsc = new SetFirstSpawnCommand(this);
 	public SMessageCmd smc = new SMessageCmd(this);
 	public LeaveListener ll = new LeaveListener(this);
-	public VoteCommand vc =  new VoteCommand(this);
+	public VoteCommand vc = new VoteCommand(this);
 	public LinksCommand lc = new LinksCommand(this);
 	public VoteListener vl = new VoteListener(this);
+	public ToolListener tl = new ToolListener(this);
+	public ToolManager tm = new ToolManager(this);
 
 	public static ScoreboardManager manager;
 	public static Scoreboard board;
 	public static Objective objective;
 
 	public void onDisable() {
-		plugin = null;
+		
 		getLogger().info("REALMUtilities has been disabled.");
+
+		RealmUtilities.plugin.inventory.set("started", null);
+		RealmUtilities.plugin.inventory.set("votetype", null);
+		RealmUtilities.plugin.inventory.set("world", null);
+		RealmUtilities.plugin.inventory.set("players", null);
+		RealmUtilities.plugin.inventory.set("yes", null);
+		RealmUtilities.plugin.saveInventory();
+		
+		plugin = null;
 	}
 
 	public void onEnable() {
@@ -85,6 +115,8 @@ public class MainClass extends JavaPlugin {
 		locations = new YamlConfiguration();
 		inventoryFile = new File(getDataFolder(), "Inventory.yml");
 		inventory = new YamlConfiguration();
+		toolFile = new File(getDataFolder(), "Tool.yml");
+		tool = new YamlConfiguration();
 		getLogger().info("REALMUtilities has been enabled.");
 		PluginManager pm = getServer().getPluginManager();
 
@@ -94,6 +126,7 @@ public class MainClass extends JavaPlugin {
 		pm.registerEvents(ll, this);
 		pm.registerEvents(guim, plugin);
 		pm.registerEvents(vl, this);
+		pm.registerEvents(tl, this);
 
 		getCommand("smessage").setExecutor(smc);
 		getCommand("setdisplayname").setExecutor(sdnc);
@@ -122,24 +155,54 @@ public class MainClass extends JavaPlugin {
 						if (chat.getPlayerPrefix(p) == null) {
 							String[] groups = chat.getPlayerGroups(p);
 							if (chat.getGroupPrefix(p.getWorld(), groups[0]) != null) {
+								if (chat.getGroupPrefix(p.getWorld(), groups[0])
+										.length() > 10) {
+									t.setPrefix("["
+											+ ChatColor
+													.translateAlternateColorCodes(
+															'&',
+															chat.getGroupPrefix(
+																	p.getWorld(),
+																	groups[0]
+																			.substring(
+																					0,
+																					11)))
+											+ ChatColor.RESET + "] ");
+
+									p.setScoreboard(board);
+								} else {
+									t.setPrefix("["
+											+ ChatColor
+													.translateAlternateColorCodes(
+															'&',
+															chat.getGroupPrefix(
+																	p.getWorld(),
+																	groups[0]))
+											+ ChatColor.RESET + "] ");
+
+									p.setScoreboard(board);
+								}
+							}
+						} else {
+							if (chat.getPlayerPrefix(p).length() > 10) {
 								t.setPrefix("["
 										+ ChatColor
 												.translateAlternateColorCodes(
 														'&',
-														chat.getGroupPrefix(
-																p.getWorld(),
-																groups[0]))
+														chat.getPlayerPrefix(p)
+																.substring(0,
+																		11))
+										+ ChatColor.RESET + "] ");
+
+								p.setScoreboard(board);
+							} else {
+								t.setPrefix("["
+										+ ChatColor.translateAlternateColorCodes(
+												'&', chat.getPlayerPrefix(p))
 										+ ChatColor.RESET + "] ");
 
 								p.setScoreboard(board);
 							}
-						} else {
-							t.setPrefix("["
-									+ ChatColor.translateAlternateColorCodes(
-											'&', chat.getPlayerPrefix(p))
-									+ ChatColor.RESET + "] ");
-
-							p.setScoreboard(board);
 						}
 					}
 				}
@@ -219,6 +282,22 @@ public class MainClass extends JavaPlugin {
 		}
 		loadInventory();
 		saveInventory();
+		RealmUtilities.plugin.inventory.set("started", null);
+		RealmUtilities.plugin.inventory.set("votetype", null);
+		RealmUtilities.plugin.inventory.set("world", null);
+		RealmUtilities.plugin.inventory.set("players", null);
+		RealmUtilities.plugin.inventory.set("yes", null);
+		RealmUtilities.plugin.saveInventory();
+		try {
+			firstToolRun();
+		} catch (Exception e) {
+			System.out.println("Could not run firstToolRun");
+			e.printStackTrace();
+		}
+		loadTool();
+		saveTool();
+
+		tm.setupTool();
 
 		scheduler.scheduleSyncRepeatingTask(
 				this,
@@ -231,7 +310,14 @@ public class MainClass extends JavaPlugin {
 						String[] array = new String[list.size()];
 						list.toArray(array);
 						int random = 0 + (int) (Math.random() * list.size());
-						
+						String msg = array[random].replace("{line}", "\n");
+						Bukkit.broadcastMessage(ChatColor.GOLD
+								+ "--------------------------------------------------");
+						Bukkit.broadcastMessage(ChatColor
+								.translateAlternateColorCodes('&', msg));
+						Bukkit.broadcastMessage(ChatColor.GOLD
+								+ "--------------------------------------------------");
+
 					}
 
 				}, 20 * getConfig().getInt("Broadcast.time"),
@@ -309,6 +395,31 @@ public class MainClass extends JavaPlugin {
 	public void saveInventory() {
 		try {
 			inventory.save(inventoryFile);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void firstToolRun() throws Exception {
+		if (!toolFile.exists()) {
+			getLogger().info("Creating a Tool.yml file");
+			toolFile.getParentFile().mkdirs();
+			toolFile.createNewFile();
+
+		}
+	}
+
+	public void loadTool() {
+		try {
+			tool.load(toolFile);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void saveTool() {
+		try {
+			tool.save(toolFile);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

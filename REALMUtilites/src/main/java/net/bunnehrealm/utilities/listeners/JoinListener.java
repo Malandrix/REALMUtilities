@@ -1,28 +1,38 @@
+/*REALMUtilities is used for adding a great amount of features to your bukkit server.
+ Copyright (C) 2013  Rory Finnegan
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package net.bunnehrealm.utilities.listeners;
 
-import net.bunnehrealm.utilities.MainClass;
-import net.bunnehrealm.utilities.tools.NameManager;
+import net.bunnehrealm.utilities.RealmUtilities;
+import net.bunnehrealm.utilities.managers.NameManager;
 
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
-import org.bukkit.event.player.PlayerLoginEvent.Result;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scoreboard.Team;
 
 public class JoinListener implements Listener {
-	MainClass plugin = MainClass.plugin;
+	RealmUtilities plugin = RealmUtilities.plugin;
 	public Team team;
 	NameManager nm = new NameManager(plugin);
 
-	public JoinListener(MainClass instance) {
+	public JoinListener(RealmUtilities instance) {
 		this.plugin = instance;
 	}
 
@@ -30,25 +40,25 @@ public class JoinListener implements Listener {
 	public void onJoin(PlayerJoinEvent e) {
 		Player p = e.getPlayer();
 
-		MainClass.plugin.players.set(p.getUniqueId().toString() + ".Real-Name",
+		RealmUtilities.plugin.players.set(p.getUniqueId().toString() + ".Real-Name",
 				p.getName().toString());
-		if (MainClass.plugin.players.contains(p.getUniqueId().toString()
+		if (RealmUtilities.plugin.players.contains(p.getUniqueId().toString()
 				+ ".Display-Name")) {
 			nm.setDisplayName(
 					p,
-					MainClass.plugin.players.getString(p.getUniqueId()
+					RealmUtilities.plugin.players.getString(p.getUniqueId()
 							.toString() + ".Display-Name"));
 		}
-		if (MainClass.plugin.players.contains(p.getUniqueId().toString()
+		if (RealmUtilities.plugin.players.contains(p.getUniqueId().toString()
 				+ ".Tab-Name")) {
 			nm.setTabName(
 					p,
-					MainClass.plugin.players.getString(p.getUniqueId()
+					RealmUtilities.plugin.players.getString(p.getUniqueId()
 							.toString() + ".Tab-Name"));
 		}
-		if (!(MainClass.plugin.players
+		if (!(RealmUtilities.plugin.players
 				.contains(p.getUniqueId() + ".left-spawn"))) {
-			MainClass.plugin.players.set(p.getUniqueId().toString()
+			RealmUtilities.plugin.players.set(p.getUniqueId().toString()
 					+ ".left-spawn", false);
 		}
 		plugin.savePlayers();
@@ -65,17 +75,17 @@ public class JoinListener implements Listener {
 					plugin.getConfig().getString("Messages.firstjoin")
 							.replace("{player}", p.getName())));
 		} else {
-			String[] playergroups = MainClass.chat.getPlayerGroups(p);
-			if (MainClass.chat.getPlayerPrefix(p) != null) {
-				String prefix = MainClass.chat.getPlayerPrefix(p);
+			String[] playergroups = RealmUtilities.chat.getPlayerGroups(p);
+			if (RealmUtilities.chat.getPlayerPrefix(p) != null) {
+				String prefix = RealmUtilities.chat.getPlayerPrefix(p);
 				e.setJoinMessage(ChatColor.translateAlternateColorCodes(
 						'&',
 						plugin.getConfig().getString("Messages.join")
 								.replace("{player}", p.getName())
 								.replace("{prefix}", prefix)));
-			} else if (MainClass.chat.getGroupPrefix(p.getWorld(),
+			} else if (RealmUtilities.chat.getGroupPrefix(p.getWorld(),
 					playergroups[0]) != null) {
-				String prefix = MainClass.chat.getGroupPrefix(p.getWorld(),
+				String prefix = RealmUtilities.chat.getGroupPrefix(p.getWorld(),
 						playergroups[0]);
 				e.setJoinMessage(ChatColor.translateAlternateColorCodes(
 						'&',
@@ -102,12 +112,5 @@ public class JoinListener implements Listener {
 	}
 	
 	
-	@EventHandler
-	public void onToolJoin(PlayerLoginEvent e){
-		Player p = e.getPlayer();
-		Inventory inv = p.getInventory();
-		ItemStack tool = new ItemStack(Material.WATCH);
-		ItemMeta im = tool.getItemMeta();
-		im.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&b&lREALM &dTool"));
-	}
+
 }
